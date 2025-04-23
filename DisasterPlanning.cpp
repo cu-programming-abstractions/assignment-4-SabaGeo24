@@ -1,13 +1,64 @@
 #include "DisasterPlanning.h"
 using namespace std;
 
-Optional<Set<string>> placeEmergencySupplies(const Map<string, Set<string>>& roadNetwork,
-                                             int numCities) {
-    /* TODO: Delete this comment and next few lines, then implement this function. */
-    (void) roadNetwork;
-    (void) numCities;
+bool isCovered(const string& city,
+               const Map<string, Set<string>>& roadNetwork,
+               const Set<string>& supplyLocations);
+
+Optional<Set<string>> planSupplies(const Map<string, Set<string>>& roadNetwork,
+                                   Set<string>& supplyLocations,
+                                   int numCities) {
+    // Check if all cities are covered
+    bool allCovered = true;
+    for (const string& city : roadNetwork) {
+        if (!isCovered(city, roadNetwork, supplyLocations)) {
+            allCovered = false;
+            break;
+        }
+    }
+
+    if (allCovered) return supplyLocations;
+
+    // Used too many cities
+    if (supplyLocations.size() >= numCities) {
+        return Nothing;
+    }
+
+    // Choose a city that hasn’t yet been covered
+    for (const string& city : roadNetwork) {
+        if (!isCovered(city, roadNetwork, supplyLocations)) {
+            Set<string> options = roadNetwork[city];
+            // Place supply in the city
+            supplyLocations.add(city);
+            auto optionalSupplyLocations = planSupplies(roadNetwork, supplyLocations, numCities);
+            if (optionalSupplyLocations != Nothing) return optionalSupplyLocations;
+            supplyLocations.remove(city);
+
+            for (const auto &neighborCity : roadNetwork[city])
+            {
+                // Place supply in the neighbor city
+                supplyLocations.add(neighborCity);
+                optionalSupplyLocations = planSupplies(roadNetwork, supplyLocations, numCities);
+                if (optionalSupplyLocations != Nothing) return optionalSupplyLocations;
+                supplyLocations.remove(neighborCity);
+            }
+
+            // If no placement covers the city, return failure
+            return Nothing;
+        }
+    }
+
     return Nothing;
 }
+
+Optional<Set<string>> placeEmergencySupplies(const Map<string, Set<string>>& roadNetwork,
+                                             int numCities) {
+    if (numCities < 0) error("Number of supply cities cannot be negative.");
+
+    Set<string> supplyLocations;
+    return planSupplies(roadNetwork, supplyLocations, numCities);
+}
+
 
 
 /* * * * * * * Test Helper Functions Below This Point * * * * * */
