@@ -2,11 +2,36 @@
 using namespace std;
 
 Optional<Set<int>> makeTarget(const Set<int>& elems, int target) {
-    /* TODO: Delete this comment and the next few lines, then implement this
-     * function.
-     */
-    (void) elems;
-    (void) target;
+
+    if(target == 0)
+    {
+        return {};
+    }
+
+    if(elems.isEmpty())
+    {
+        return Nothing;
+    }
+
+    int firstnum = elems.first();
+    Set<int> newSet = elems - firstnum;
+
+
+    Optional<Set<int>> with = makeTarget(newSet, target - firstnum);
+
+    if(with != Nothing)
+    {
+        with.value().add(firstnum);
+        return with;
+    }
+
+    Optional<Set<int>> without = makeTarget(newSet, target);
+
+    if(without != Nothing)
+    {
+        return without;
+    }
+
     return Nothing;
 }
 
